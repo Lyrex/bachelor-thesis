@@ -3,40 +3,39 @@ package net.lyrex.audio
 import com.google.cloud.texttospeech.v1.*;
 
 
-class AudioProcessor {
-    companion object {
-        // TODO(tobias): Implement audio file caching (using the hash of a text snippet as cache index)
+internal class AudioProcessor {
+    internal companion object {
+        private val defaultVoice = Voice(Language.German, Gender.Male, "de-DE-Wavenet-B")
 
         @JvmStatic
         fun textToMp3(inputText: String): ByteArray {
-            return textToAudio(inputText, AudioEncoding.MP3)
+            return textToAudio(inputText, AudioEncoding.MP3, defaultVoice)
         }
-
 
         @JvmStatic
         fun textToWav(inputText: String): ByteArray {
-            return textToAudio(inputText, AudioEncoding.LINEAR16)
+            return textToAudio(inputText, AudioEncoding.LINEAR16, defaultVoice)
         }
 
         @JvmStatic
-        private fun textToAudio(inputText: String, audioEncoding: AudioEncoding): ByteArray {
+        fun textToAudio(inputText: String, audioEncoding: AudioEncoding, voice: Voice, speakingRate: Double = 1.0): ByteArray {
             TextToSpeechClient.create().use { ttsClient ->
                 val input = SynthesisInput.newBuilder().setText(inputText).build()
 
-                val voice = VoiceSelectionParams.newBuilder()
-                        .setLanguageCode("de-DE")
-                        .setSsmlGender(SsmlVoiceGender.MALE)
+                val voiceParams = VoiceSelectionParams.newBuilder()
+                        .setLanguageCode(voice.language.languageString)
+                        .setSsmlGender(voice.gender.ssmlGender)
+                        .setName(voice.name)
                         .build()
 
-                val audioConfig = AudioConfig.newBuilder().setAudioEncoding(audioEncoding).build()
-                if (audioConfig == null) {
-                    // TODO(tobias): handle null exception here, should not ever happen
-                    assert(false);
-                }
+                val audioConfig = AudioConfig.newBuilder()
+                        .setAudioEncoding(audioEncoding)
+                        .setSpeakingRate(speakingRate)
+                        .build()
 
                 // Perform the text-to-speech request on the text input with the selected voice parameters and
                 // audio file type
-                val response: SynthesizeSpeechResponse = ttsClient.synthesizeSpeech(input, voice, audioConfig)
+                val response: SynthesizeSpeechResponse = ttsClient.synthesizeSpeech(input, voiceParams, audioConfig)
 
                 // Get the audio contents from the response
                 val audioContents = response.audioContent
