@@ -225,7 +225,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>${project.groupId}.App</mainClass>
+                            <mainClass>${project.groupId}.MainKt</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
