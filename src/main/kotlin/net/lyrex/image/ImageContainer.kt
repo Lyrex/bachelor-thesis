@@ -17,7 +17,9 @@ class ImageContainer {
             throw FileNotFoundException("could not find file \"$imageFile\"")
         }
 
-        this.imageData = FileInputStream(imageFile).readAllBytes()
+        FileInputStream(imageFile).use { fis ->
+            this.imageData = fis.readAllBytes()
+        }
     }
 
     fun asBase64(): String {
