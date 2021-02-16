@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="net.lyrex.DiktatGui">
+<form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="net.lyrex.gui.DiktatGui">
   <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="5" left="5" bottom="5" right="5"/>
     <constraints>
-      <xy x="20" y="20" width="400" height="358"/>
+      <xy x="20" y="20" width="649" height="358"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -24,36 +24,36 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="76c57" class="javax.swing.JButton" binding="button3" default-binding="true">
+          <component id="76c57" class="javax.swing.JButton" binding="previousSentence">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Button"/>
+              <text value="Vorheriger Satz"/>
             </properties>
           </component>
-          <component id="673ad" class="javax.swing.JButton" binding="button4" default-binding="true">
+          <component id="673ad" class="javax.swing.JButton" binding="repeatSentence">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Button"/>
+              <text value="Satz wiederholen"/>
             </properties>
           </component>
-          <component id="35e9e" class="javax.swing.JButton" binding="button5" default-binding="true">
+          <component id="35e9e" class="javax.swing.JButton" binding="nextSentence">
             <constraints>
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Button"/>
+              <text value="Nächster Satz"/>
             </properties>
           </component>
-          <component id="d8649" class="javax.swing.JButton" binding="button6" default-binding="true">
+          <component id="d8649" class="javax.swing.JButton" binding="pauseSentence">
             <constraints>
               <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Button"/>
+              <text value="Ausgabe Pausieren"/>
             </properties>
           </component>
         </children>
@@ -65,7 +65,7 @@
           </grid>
         </constraints>
         <properties>
-          <text value="Vorlesen"/>
+          <text value="Diktieren"/>
         </properties>
       </component>
       <scrollpane id="5c8e4">

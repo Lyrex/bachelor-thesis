@@ -10,7 +10,7 @@ import java.util.*
 
 fun Tree.isSentence(): Boolean = this.label().value().length == 2 && this.label().value().endsWith("P")
 
-const val TARGET_TEXT_LENGTH = 25
+const val TARGET_TEXT_LENGTH = 20
 const val MAX_TEXT_LENGTH = 40
 
 class NLPProcessor {
@@ -289,7 +289,7 @@ class NLPProcessor {
         val sentences = doc.sentences()
 
 //        println("aauupp")
-//        println(dissectSentence(sentences[4]))
+//        println(dissectSentence(sentences[0]))
 
         val parsedSentences = mutableListOf<List<String>>()
         for (sentence in sentences) {

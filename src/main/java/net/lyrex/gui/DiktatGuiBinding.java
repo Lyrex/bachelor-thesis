@@ -1,4 +1,4 @@
-package net.lyrex;
+package net.lyrex.gui;
 
 import java.util.List;
 

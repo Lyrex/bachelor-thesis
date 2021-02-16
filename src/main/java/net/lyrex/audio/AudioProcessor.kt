@@ -25,7 +25,7 @@ class AudioProcessor {
 
                 val voice = VoiceSelectionParams.newBuilder()
                         .setLanguageCode("de-DE")
-                        .setSsmlGender(SsmlVoiceGender.NEUTRAL)
+                        .setSsmlGender(SsmlVoiceGender.MALE)
                         .build()
 
                 val audioConfig = AudioConfig.newBuilder().setAudioEncoding(audioEncoding).build()

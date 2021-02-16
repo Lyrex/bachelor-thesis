@@ -1,8 +1,6 @@
 package net.lyrex;
 
-import net.lyrex.image.ImageContainer;
-import net.lyrex.image.ImageProcessor;
-import net.lyrex.nlp.NLPProcessor;
+import net.lyrex.gui.DiktatGui;
 
 import javax.swing.*;
 import java.io.IOException;
