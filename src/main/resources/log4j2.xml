@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <appenders>
+        <Console name="ConsoleAppender" target="SYSTEM_OUT">
+            <PatternLayout pattern="%style{%date{yyyy-MM-dd HH:mm:ss.SSS}}{yellow} [%t] %highlight{%-5level}{FATAL=bg_red, ERROR=red, WARN=yellow, INFO=green} %logger{36} - %message\n" disableAnsi="false" />
+        </Console>
+    </appenders>
+
+    <loggers>
+        <root level="info">
+            <appenderRef ref="ConsoleAppender"/>
+        </root>
+
+        <Logger name="net.lyrex" level="debug">
+            <appenderRef ref="ConsoleAppender"/>
+        </Logger>
+    </loggers>
+</configuration>
