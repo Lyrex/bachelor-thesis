@@ -5,6 +5,7 @@ import edu.stanford.nlp.pipeline.CoreSentence
 import edu.stanford.nlp.pipeline.StanfordCoreNLP
 import edu.stanford.nlp.trees.Tree
 import edu.stanford.nlp.util.StringUtils
+import net.lyrex.audio.Language
 import java.lang.Exception
 import java.util.*
 
@@ -13,14 +14,12 @@ fun Tree.isSentence(): Boolean = this.label().value().length == 2 && this.label(
 const val TARGET_TEXT_LENGTH = 20
 const val MAX_TEXT_LENGTH = 40
 
-class NLPProcessor {
-    val inputString = """Ein Fuchs und ein Esel waren schon seit Jahren ziemlich gute Freunde. Gemeinsam gingen sie sogar auf Nahrungssuche. Als der Fuchs sich zeitweilig von dem Esel trennte, weil er einige Brombeeren erschnüffelt hatte, erblickte er plötzlich einen gewaltigen Löwen vor sich. Da der Fuchs wusste, dass ein Fliehen offenkundig unmöglich war, überspielte er sein Entsetzen und meinte unbekümmert: "Großer, barmherziger König, ich fürchte dich nicht. Doch sollte dich der Hunger plagen, kann ich dir meinen dummen Gefährten als Mahlzeit bringen." Der Löwe versprach, den Fuchs zu verschonen, wenn er im Gegenzug den Esel zu ihm führen würde. Darauf konnte der Fuchs den Esel tatsächlich mit einer List in eine Grube locken und schon kam der Löwe mit dröhnendem Gebrüll angesprungen. Allerdings stürzte er sich nun direkt auf den Fuchs. Die letzten Worte, die der verräterische Fuchs vernahm, lauteten: "Der Esel ist mir sicher, aber dich fresse ich wegen deiner Falschheit zuerst."Die Moral: Den Verrat mag man ausnutzen, aber den Verräter mag man deshalb noch lange nicht."""
-
+class NLPProcessor(private val lang: Language, private val pronouncePunctation: Boolean) {
     private var pipeline: StanfordCoreNLP
 
     init {
-        val props: Properties = StringUtils.argsToProperties("-props", "StanfordCoreNLP-german.properties")
-        props.setProperty("language", "german")
+        val props: Properties = StringUtils.argsToProperties("-props", "StanfordCoreNLP-${lang.toCoreNlpString()}.properties")
+        props.setProperty("language", lang.toCoreNlpString())
         props.setProperty("annotators", "tokenize,ssplit,pos,parse")
         props.setProperty("coref.algorithm", "neural")
         pipeline = StanfordCoreNLP(props)
@@ -37,7 +36,7 @@ class NLPProcessor {
                 result += "${tree.spanString()} "
             }
             tree.isPhrasal -> {
-                var s: String = ""
+                var s = ""
                 var open = openn
                 for (c in tree.children()) {
                     if (!open && c.isPreTerminal) {
@@ -79,18 +78,20 @@ class NLPProcessor {
         val isSentence = { node: Tree -> node.label().value().length == 2 && node.label().value().endsWith("P") }
         val isNoSentence = { node: Tree -> !isSentence(node) }
 
-        //println(1)
         val parsed = parseSubTree(constituencyTree)
-        //println(parsed)
+        val parts: List<String> = parsed.split("[", "]")
 
-        //println(2)
-        val parts: List<String> = parsed.split("[", "]");
+        val preProcessedParts = flattenOncePass(parts).toMutableList()
+        fixPunctationPass(preProcessedParts)
 
-        val preProcessedParts = flattenOnce(parts).toMutableList()
-        fixPunctation(preProcessedParts)
-        val processedList = parseParts(preProcessedParts)
-        val finalList = finalizePunctation(fixWhitespace(processedList))
+        val processedList = parsePartsPass(preProcessedParts)
+        val correctedWhitespace = fixWhitespacePass(processedList)
 
+        val resultList: List<String> = if (pronouncePunctation) {
+            makePunctationPronouncedPass(correctedWhitespace)
+        } else {
+            correctedWhitespace
+        }
 /*
         val dependencyGraph: SemanticGraph = sentence.dependencyParse()
 
@@ -114,10 +115,10 @@ class NLPProcessor {
 */
 
 
-        return finalList
+        return resultList
     }
 
-    private fun parseParts(parts: List<String>): List<String> {
+    private fun parsePartsPass(parts: List<String>): List<String> {
         var skipN = 0
 
         val processedList = mutableListOf<String>()
@@ -175,7 +176,7 @@ class NLPProcessor {
                 .map { s -> s.trim() }
     }
 
-    private fun flattenOnce(parts: List<String>): List<String> {
+    private fun flattenOncePass(parts: List<String>): List<String> {
         val preProcessedParts = mutableListOf<String>()
 
         var skip = 0
@@ -210,7 +211,7 @@ class NLPProcessor {
                 .map { s -> s.trim() }
     }
 
-    private fun fixPunctation(parts: MutableList<String>) {
+    private fun fixPunctationPass(parts: MutableList<String>) {
         parts.forEachIndexed { index, s ->
             if (s.isNotEmpty()) {
                 if (parts.lastIndex > index + 1) {
@@ -221,6 +222,14 @@ class NLPProcessor {
                             next.startsWith('.') -> {
                                 parts[index] += "."
                                 parts[index + 1] = next.removePrefix(".").trimStart()
+                            }
+                            next.startsWith('!') -> {
+                                parts[index] += "!"
+                                parts[index + 1] = next.removePrefix("!").trimStart()
+                            }
+                            next.startsWith('?') -> {
+                                parts[index] += "?"
+                                parts[index + 1] = next.removePrefix("?").trimStart()
                             }
                             next.startsWith(',') -> {
                                 parts[index] += ","
@@ -243,7 +252,7 @@ class NLPProcessor {
         }
     }
 
-    private fun fixWhitespace(parts: List<String>): List<String> {
+    private fun fixWhitespacePass(parts: List<String>): List<String> {
         val result = mutableListOf<String>()
 
         parts.forEach { s ->
@@ -252,6 +261,8 @@ class NLPProcessor {
             if (current.isNotEmpty()) {
                 current = current.replace("  ", " ")
                 current = current.replace(" .", ".")
+                current = current.replace(" !", "!")
+                current = current.replace(" ?", "?")
                 current = current.replace(" ,", ",")
                 current = current.replace(" :", ":")
                 current = current.replace("\" ", "\"")
@@ -264,17 +275,14 @@ class NLPProcessor {
         return result
     }
 
-    private fun finalizePunctation(parts: List<String>): List<String> {
+    private fun makePunctationPronouncedPass(parts: List<String>): List<String> {
         val result = mutableListOf<String>()
 
         parts.forEach { s ->
-            var current = s
-
-            if (current.isNotEmpty()) {
-                current = current.replace(".", " Punkt")
-                current = current.replace(",", " Komma")
-                current = current.replace(":", " Doppelpunkt")
-                current = current.replace("\" ", " Anführungszeichen ")
+            val current = if (s.isNotEmpty()) {
+                replacePunctation(s)
+            } else {
+                s
             }
 
             result.add(current)
@@ -283,13 +291,93 @@ class NLPProcessor {
         return result
     }
 
+    private fun replacePunctation(input: String): String {
+        return when (lang) {
+            Language.German ->
+                input.replace(".", " Punkt")
+                        .replace(",", " Komma")
+                        .replace(":", " Doppelpunkt")
+                        .replace("!", " Ausrufezeichen")
+                        .replace("?", " Fragezeichen")
+                        .replace(";", " Semikolon")
+                        .replace("\"", " Anführungszeichen")
+                        .replace("[", " Paranthese auf")
+                        .replace("]", " Paranthese zu")
+                        .replace("-", " Bindestrich")
+                        .replace("»", " Anführungszeichen")
+                        .replace("«", " Anführungszeichen")
+                        .replace("/", " Schrägstrich")
+                        .replace("(", " Klammer auf")
+                        .replace(")", " Klammer zu")
+                        .replace("'", " Anführungszeichen")
+                        .replace("-RRB-", " Klammer zu")
+                        .replace("-LRB-", " Klammer auf")
+            Language.EnglishUS, Language.EnglishUK ->
+                input.replace(".", " dot")
+                        .replace(",", " comma")
+                        .replace(":", " colon")
+                        .replace("!", " exclamation mark")
+                        .replace("?", " question mark")
+                        .replace(";", " semicolon")
+                        .replace("\"", " quotation marks")
+                        .replace("[", " parenthesis on")
+                        .replace("]", " parenthesis closed")
+                        .replace("-", " hyphen")
+                        .replace("»", " quotation marks")
+                        .replace("«", " quotation marks")
+                        .replace("'", " quotation marks")
+                        .replace("/", " slash")
+                        .replace("(", " brackets on")
+                        .replace(")", " brackets closed")
+                        .replace("-RRB-", " brackets on")
+                        .replace("-LRB-", " brackets closed")
+            Language.Spanish ->
+                input.replace(".", " punto")
+                        .replace(",", " coma")
+                        .replace(":", " los dos puntos")
+                        .replace("!", " signos de exclamación")
+                        .replace("¡", " signos de exclamación")
+                        .replace("?", " signos de interrogación")
+                        .replace("¿", " signos de interrogación")
+                        .replace(";", " punto y coma")
+                        .replace("\"", " comillas")
+                        .replace("[", " corchetes")
+                        .replace("]", " corchetes")
+                        .replace("-", " guión")
+                        .replace("»", " comillas")
+                        .replace("«", " comillas")
+                        .replace("'", " comillas")
+                        .replace("/", " barra oblicua")
+                        .replace("(", " paréntesis")
+                        .replace(")", " paréntesis")
+                        .replace("-RRB-", " paréntesis")
+                        .replace("-LRB-", " paréntesis")
+            Language.French ->
+                input.replace(".", " point")
+                        .replace(",", " virgule")
+                        .replace(":", " double point")
+                        .replace("!", " point d'exclamation")
+                        .replace("?", " point d'interrogation")
+                        .replace(";", " point d'interrogation")
+                        .replace("\"", " guillemets")
+                        .replace("[", " parenthèses")
+                        .replace("]", " parenthèses")
+                        .replace("-", " piret")
+                        .replace("»", " guillemets")
+                        .replace("«", " guillemets")
+                        .replace("'", " guillemets")
+                        .replace("/", " sabrer")
+                        .replace("(", " parenthèses")
+                        .replace(")", " parenthèses")
+                        .replace("-RRB-", " parenthèses")
+                        .replace("-LRB-", " parenthèses")
+        }
+    }
+
     fun dissectText(input: String): List<List<String>> {
         val doc = pipeline.processToCoreDocument(input)
 
         val sentences = doc.sentences()
-
-//        println("aauupp")
-//        println(dissectSentence(sentences[0]))
 
         val parsedSentences = mutableListOf<List<String>>()
         for (sentence in sentences) {
@@ -328,6 +416,6 @@ class NLPProcessor {
         return parsedSentences
     }
 
-    private fun containsStopPunctation(s: String) = s.contains('.') || s.contains(';') || s.contains(':')
+    private fun containsStopPunctation(s: String) = s.contains('.') || s.contains('!') || s.contains('?') || s.contains(';') || s.contains(':')
     private fun containsPunctation(s: String) = containsStopPunctation(s) || s.contains(',')
 }
