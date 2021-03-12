@@ -134,8 +134,8 @@ class AudioPlayer {
 
             synchronized(lock) {
                 threadNotNull = _audioThread != null
-                threadIsAlive = _audioThread!!.isAlive
-                threadNotInterrupted = !_audioThread!!.isInterrupted
+                threadIsAlive = threadNotNull && _audioThread!!.isAlive
+                threadNotInterrupted = threadNotNull && !_audioThread!!.isInterrupted
             }
 
             logger.trace { "isThreadNotNull: $threadNotNull" }
