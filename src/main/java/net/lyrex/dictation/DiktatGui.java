@@ -42,10 +42,44 @@ public class DiktatGui extends JFrame {
         // set-up menu bar
         final JMenuBar menuBar = new JMenuBar();
         var fileMenu = new JMenu("Datei");
-        JMenuItem settingsMenuItem = new JMenuItem("Einstellungen");
-        settingsMenuItem.addActionListener(e -> optionWindow.setVisible(true));
 
+        var settingsMenuItem = new JMenuItem("Einstellungen");
+        settingsMenuItem.addActionListener(e -> optionWindow.setVisible(true));
         fileMenu.add(settingsMenuItem);
+
+        var exportMenuItem = new JMenuItem("Export als WAV");
+        exportMenuItem.addActionListener(e -> {
+            loadingDialogue.setVisible(true);
+
+            final var dictateAudio = dictateController.generateAudioFromDicate();
+            loadingDialogue.setVisible(false);
+
+            if (dictateAudio.length == 0) {
+                JOptionPane.showMessageDialog(this, "Keine Daten gefunden.", "Warnung", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            final JFileChooser fc = new JFileChooser();
+            fc.setFileFilter(new FileNameExtensionFilter("Audio-Datei (.wav)", "wav"));
+
+            int returnVal = fc.showOpenDialog(mainPanel);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                File file = fc.getSelectedFile();
+
+                if (!file.getName().toLowerCase().endsWith(".wav")) {
+                    file = new File(file.toString() + ".wav");
+                }
+
+                try (var outputStream = new FileOutputStream(file, false)) {
+                    outputStream.write(dictateAudio);
+                } catch (IOException ioException) {
+                    // todo(tobias): improve error handling
+                    ioException.printStackTrace();
+                }
+            }
+        });
+        fileMenu.add(exportMenuItem);
+
         menuBar.add(fileMenu);
         this.setJMenuBar(menuBar);
 

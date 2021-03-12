@@ -8,8 +8,13 @@ import mu.KotlinLogging
 
 import net.lyrex.audio.*
 import net.lyrex.nlp.NLPProcessor
+import java.io.*
 import java.lang.Exception
+import javax.sound.sampled.AudioSystem
+import javax.sound.sampled.AudioInputStream
+import javax.sound.sampled.AudioFileFormat
 
+import kotlin.math.roundToInt
 
 
 private val logger = KotlinLogging.logger {}
@@ -72,6 +77,45 @@ class DictateController {
 
         _currentSentenceIndex = 0
     }
+
+    private fun getAudioForSentence(sentenceParts: List<String>): List<ByteArray> {
+        val sentenceAudio = mutableListOf<ByteArray>()
+
+        val silenceBytes = this.javaClass.getResourceAsStream("/audio/silence-500ms.wav").use {
+            s -> s.readBytes()
+        }
+
+        val addFullSentenceAudio = {
+            val text = sentenceParts.joinToString(separator = " ")
+            val audio = _audioCache.getAudioForText(text)
+            sentenceAudio.add(audio)
+        }
+
+        if (dictateOptions.readFullSentenceAtStart) {
+            addFullSentenceAudio()
+        }
+
+        sentenceParts.forEach { part ->
+            for (i in dictateOptions.partRepetitions downTo 0) {
+                val partAudio = _audioCache.getAudioForText(part)
+                sentenceAudio.add(partAudio)
+
+                if (dictateOptions.pauseTimeBetweenRepetitions > Duration.ZERO && partAudio.isNotEmpty()) {
+                    val sleepDuration = dictateOptions.pauseTimeBetweenSentences.toMillis()
+                    val pauseCount = (sleepDuration / 500.0f).roundToInt()
+
+                    for (n in 0..pauseCount) {
+                        sentenceAudio.add(silenceBytes)
+                    }
+                }
+            }
+        }
+
+        if (dictateOptions.readFullSentenceAtEnd) {
+            addFullSentenceAudio()
+        }
+
+        return sentenceAudio
     }
 
     private fun dictateSentence(index: Int) {
@@ -130,6 +174,46 @@ class DictateController {
         }
     }
 
+    fun generateAudioFromDicate(): ByteArray {
+        val audioPartsList = mutableListOf<ByteArray>()
+
+        parseTextIntoSentencesIfNecessary()
+
+        val silenceBytes = this.javaClass.getResourceAsStream("/audio/silence-500ms.wav").use {
+            s -> s.readBytes()
+        }
+
+        if (dictateOptions.readFullDictateOnce) {
+            _sentences.forEach { sentence ->
+                val sentenceText = sentence.joinToString(separator = " ")
+                val sentenceAudio = _audioCache.getAudioForText(sentenceText)
+
+                audioPartsList.add(sentenceAudio)
+            }
+        }
+
+        _sentences.forEach { sentence ->
+            val sentenceAudio = getAudioForSentence(sentence)
+            audioPartsList.addAll(sentenceAudio)
+
+            // wait configured time between sentences
+            if (dictateOptions.pauseTimeBetweenSentences > Duration.ZERO && sentenceAudio.isNotEmpty()) {
+                var pauseDuration = dictateOptions.pauseTimeBetweenSentences - dictateOptions.pauseTimeBetweenRepetitions
+                if (pauseDuration < Duration.ZERO) {
+                    pauseDuration = Duration.ZERO
+                }
+
+                val pauseDurationMillis = pauseDuration.toMillis()
+                val pauseCount = (pauseDurationMillis / 500.0f).roundToInt()
+
+                for (n in 0..pauseCount) {
+                    audioPartsList.add(silenceBytes)
+                }
+            }
+        }
+
+        return mergeAudioStreams(audioPartsList, AudioFileFormat.Type.WAVE)
+    }
 
     fun dictatePreviousSentence() {
         parseTextIntoSentencesIfNecessary()
@@ -193,6 +277,40 @@ class DictateController {
 
             _textChanged = false
         }
+    }
+
+    private fun mergeAudioStreams(audioInputByteArrays: List<ByteArray>, audioType: AudioFileFormat.Type): ByteArray {
+        if (audioInputByteArrays.isEmpty()) {
+            return ByteArray(0)
+        }
+        if (audioInputByteArrays.size == 1) {
+            return audioInputByteArrays.first()
+        }
+
+        val clipA = AudioSystem.getAudioInputStream(ByteArrayInputStream(audioInputByteArrays[0]))
+        val clipB = AudioSystem.getAudioInputStream(ByteArrayInputStream(audioInputByteArrays[1]))
+        var appendedFiles = AudioInputStream(SequenceInputStream(clipA, clipB),
+                clipA.format, clipA.frameLength + clipB.frameLength)
+
+
+        for (i in 1 until audioInputByteArrays.size - 1) {
+            val clip = AudioSystem.getAudioInputStream(ByteArrayInputStream(audioInputByteArrays[i + 1]))
+
+            appendedFiles = AudioInputStream(
+                    SequenceInputStream(appendedFiles, clip),
+                    appendedFiles.format,
+                    appendedFiles.frameLength + clip.frameLength)
+        }
+
+        val output = ByteArrayOutputStream()
+        try {
+            AudioSystem.write(appendedFiles, audioType, output)
+        } catch (ex: Exception) {
+            logger.error { "exception Occurred: $ex" }
+            return ByteArray(0)
+        }
+
+        return output.toByteArray()
     }
 
     // ---[ member variables
