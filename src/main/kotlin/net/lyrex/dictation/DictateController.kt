@@ -17,7 +17,7 @@ class DictateController {
         this.dictateText = inputText
         this.dictateOptions = dictateOptions
 
-        this._audioCache = AudioCache(AudioEncoding.LINEAR16, dictateOptions.voice)
+        this._audioCache = AudioCache(AudioEncoding.LINEAR16, dictateOptions.voice, dictateOptions.speakingSpeed)
         this._nlpProcessor = NLPProcessor(this.dictateOptions.language, dictateOptions.pronouncePunctation,
                 dictateOptions.charactersPerSentencePartTarget, dictateOptions.charactersPerSentencePartMax)
     }
@@ -172,8 +172,8 @@ class DictateController {
             }
 
             // invalidate the audio cache if the voice changed
-            if (field == null || field.voice != value.voice) {
-                _audioCache = AudioCache(AudioEncoding.LINEAR16, value.voice)
+            if (field == null || field.voice != value.voice || field.speakingSpeed != value.speakingSpeed) {
+                _audioCache = AudioCache(AudioEncoding.LINEAR16, value.voice, value.speakingSpeed)
             }
 
             field = value

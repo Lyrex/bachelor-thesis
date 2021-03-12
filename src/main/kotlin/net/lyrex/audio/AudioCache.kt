@@ -8,13 +8,15 @@ private val logger = KotlinLogging.logger {}
 //todo(tobias): Add additional file level cache based on some hash function to avoid repeated calls to google for
 //               the same text
 
-class AudioCache(val encoding: AudioEncoding, val voice: Voice) {
+class AudioCache(private val encoding: AudioEncoding, private val voice: Voice, private val speakingSpeed: SpeakingSpeed) {
     private val _cache: MutableMap<String, ByteArray> = hashMapOf()
 
     init {
         require(encoding == AudioEncoding.LINEAR16
                 || encoding == AudioEncoding.MP3
                 || encoding == AudioEncoding.OGG_OPUS) { "encoding must be a valid audio encofing" }
+
+        logger.info { "rebuilding audio cache with with encoding: $" }
     }
 
     fun getAudioForText(input: String): ByteArray {
@@ -27,7 +29,7 @@ class AudioCache(val encoding: AudioEncoding, val voice: Voice) {
                 return _cache[input]!!
             }
 
-            val audio = AudioProcessor.textToAudio(input, encoding, voice)
+            val audio = AudioProcessor.textToAudio(input, encoding, voice, speakingSpeed)
             _cache[input] = audio
 
             return audio

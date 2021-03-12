@@ -1,11 +1,11 @@
 package net.lyrex.audio
 
-enum class SpeakingSpeed(val speed: Float) {
-    VerySlow(0.70f),
-    Slow(0.85f),
-    Normal(1.0f),
-    Fast(1.3f),
-    VeryFast(1.5f);
+enum class SpeakingSpeed(val speed: Double) {
+    VerySlow(0.70),
+    Slow(0.85),
+    Normal(1.0),
+    Fast(1.15),
+    VeryFast(1.3);
 
     override fun toString(): String {
         return when (this) {

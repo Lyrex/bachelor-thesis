@@ -18,7 +18,8 @@ internal class AudioProcessor {
         }
 
         @JvmStatic
-        fun textToAudio(inputText: String, audioEncoding: AudioEncoding, voice: Voice, speakingRate: Double = 1.0): ByteArray {
+        fun textToAudio(inputText: String, audioEncoding: AudioEncoding, voice: Voice,
+                        speakingSpeed: SpeakingSpeed = SpeakingSpeed.Normal): ByteArray {
             TextToSpeechClient.create().use { ttsClient ->
                 val input = SynthesisInput.newBuilder().setText(inputText).build()
 
@@ -30,7 +31,7 @@ internal class AudioProcessor {
 
                 val audioConfig = AudioConfig.newBuilder()
                         .setAudioEncoding(audioEncoding)
-                        .setSpeakingRate(speakingRate)
+                        .setSpeakingRate(speakingSpeed.speed)
                         .build()
 
                 // Perform the text-to-speech request on the text input with the selected voice parameters and
