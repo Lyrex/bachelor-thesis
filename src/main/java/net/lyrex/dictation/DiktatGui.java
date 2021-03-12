@@ -27,13 +27,19 @@ public class DiktatGui extends JFrame {
     private JButton stopDictationButton;
 
     private final OptionDialogue optionWindow = new OptionDialogue();
+    private final LoadingDialogue loadingDialogue = new LoadingDialogue();
 
-    private final DictateController dictateController =
-            new DictateController("",
-                    optionWindow.getDictateOptions()
-            );
+    private final DictateController dictateController;
+
 
     public DiktatGui() {
+        loadingDialogue.pack();
+        loadingDialogue.setLocationRelativeTo(null);
+        loadingDialogue.setAlwaysOnTop(true);
+        loadingDialogue.setVisible(true);
+
+        dictateController = new DictateController("", optionWindow.getDictateOptions());
+
         // set-up window
         this.setTitle("Diktat Buddy");
         this.setContentPane(this.mainPanel);
@@ -86,8 +92,8 @@ public class DiktatGui extends JFrame {
         // set-up option window action listeners
         optionWindow.cancelButton.addActionListener(e -> optionWindow.setVisible(false));
         optionWindow.confirmButton.addActionListener(e -> {
-            dictateController.setDictateOptions(optionWindow.getDictateOptions());
-            optionWindow.setVisible(false);
+            var worker = new ApplyOptionsWorker();
+            worker.execute();
         });
 
         // set-up action listeners
@@ -171,6 +177,8 @@ public class DiktatGui extends JFrame {
         });
 
         this.pack();
+        loadingDialogue.buttonOK.setEnabled(true);
+        loadingDialogue.setVisible(false);
     }
 
     {
@@ -234,15 +242,13 @@ public class DiktatGui extends JFrame {
         diktatText.setVisible(false);
         textPane.setVisible(false);
 
-        textPane.invalidate();
         textPane.revalidate();
     }
 
     private void showTextArea() {
         diktatText.setVisible(true);
-        textPane.setVisible(false);
+        textPane.setVisible(true);
 
-        textPane.invalidate();
         textPane.revalidate();
     }
 
@@ -319,6 +325,27 @@ public class DiktatGui extends JFrame {
             if (!dictateController.getPaused()) {
                 dictateButton.setText("Diktieren");
             }
+        }
+    }
+
+    private class ApplyOptionsWorker extends SwingWorker<Object, Object> {
+        @Override
+        protected Object doInBackground() {
+            optionWindow.setVisible(false);
+
+            loadingDialogue.buttonOK.setEnabled(false);
+            loadingDialogue.setVisible(true);
+            loadingDialogue.revalidate();
+
+            dictateController.setDictateOptions(optionWindow.getDictateOptions());
+
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            loadingDialogue.buttonOK.setEnabled(true);
+            loadingDialogue.setVisible(false);
         }
     }
 }
