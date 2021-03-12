@@ -8,11 +8,15 @@ import mu.KotlinLogging
 
 import net.lyrex.audio.*
 import net.lyrex.nlp.NLPProcessor
+import java.lang.Exception
+
 
 
 private val logger = KotlinLogging.logger {}
 
 class DictateController {
+    var paused = false
+
     constructor(inputText: String, dictateOptions: DictateOptions) {
         this.dictateText = inputText
         this.dictateOptions = dictateOptions
@@ -26,6 +30,10 @@ class DictateController {
     fun dictateFullText() {
         parseTextIntoSentencesIfNecessary()
 
+        if (!paused) {
+            _currentSentenceIndex = 0
+        } else {
+            paused = false
         }
 
         // actually play audio for dictate now
@@ -36,19 +44,34 @@ class DictateController {
                 logger.debug { "plaing back audio for \"$sentenceText\"" }
                 _audioPlayer.play(sentenceAudio)
                 _audioPlayer.waitUntilPlayingIsOver()
+
+                if (paused) {
+                    return
+                }
             }
         }
 
         // dictate sentence by sentence
-        _sentences.forEachIndexed { index, sentence ->
+        _sentences.forEachIndexed { index, _ ->
+            if (_sentences.size > _currentSentenceIndex && index < _currentSentenceIndex) {
+                return@forEachIndexed
+            }
+
             _currentSentenceIndex = index
-            dictateSentence(sentence)
+            try {
+                dictateSentence(index)
+            } catch (e: InterruptedException) {
+                return
+            }
 
             // wait configured time between sentences
             if (dictateOptions.pauseTimeBetweenSentences > Duration.ZERO) {
                 TimeUnit.MILLISECONDS.sleep(dictateOptions.pauseTimeBetweenSentences.toMillis())
             }
         }
+
+        _currentSentenceIndex = 0
+    }
     }
 
     private fun dictateSentence(index: Int) {
@@ -67,22 +90,38 @@ class DictateController {
             logger.debug { "plaing back audio for \"$sentenceText\"" }
             _audioPlayer.play(sentenceAudio)
             _audioPlayer.waitUntilPlayingIsOver()
+
+            if (paused) {
+                _pausedAtPart = 0
+                throw InterruptedException("playback paused")
+            }
         }
 
-        if (dictateOptions.readFullSentenceAtStart) {
+        if (dictateOptions.readFullSentenceAtStart && _pausedAtPart == 0) {
             readFullSentence()
         }
 
-        sentenceParts.forEach { part ->
+        sentenceParts.forEachIndexed { idx, part ->
+            if (sentenceParts.size > _pausedAtPart && idx < _pausedAtPart) {
+                return@forEachIndexed
+            }
+
             for (i in dictateOptions.partRepetitions downTo 0) {
                 val partAudio = _audioCache.getAudioForText(part)
                 logger.debug { "playing back audio for \"$part\"" }
                 _audioPlayer.play(partAudio)
                 _audioPlayer.waitUntilPlayingIsOver()
 
+                if (paused) {
+                    _pausedAtPart = idx
+                    throw InterruptedException("playback paused")
+                }
+
                 if (dictateOptions.pauseTimeBetweenRepetitions > Duration.ZERO) {
                     TimeUnit.MILLISECONDS.sleep(dictateOptions.pauseTimeBetweenRepetitions.toMillis())
                 }
+
+                _pausedAtPart = 0
             }
         }
 
@@ -96,6 +135,9 @@ class DictateController {
         parseTextIntoSentencesIfNecessary()
 
         if (_currentSentenceIndex > 0) {
+            _pausedAtPart = 0
+            paused = false
+
             _currentSentenceIndex -= 1
             dictateSentence(_currentSentenceIndex)
         }
@@ -105,6 +147,9 @@ class DictateController {
         parseTextIntoSentencesIfNecessary()
 
         if (_sentences.lastIndex <= _currentSentenceIndex) {
+            _pausedAtPart = 0
+            paused = false
+
             dictateSentence(_currentSentenceIndex)
         }
     }
@@ -113,16 +158,28 @@ class DictateController {
         parseTextIntoSentencesIfNecessary()
 
         if ((_currentSentenceIndex + 1) < _sentences.lastIndex) {
+            _pausedAtPart = 0
+            paused = false
+
             _currentSentenceIndex += 1
             dictateSentence(_currentSentenceIndex)
         }
     }
 
+    fun stopDictate() {
+        paused = true
+        _audioPlayer.stop()
+        _currentSentenceIndex = 0
+        _pausedAtPart = 0
+    }
+
     fun pauseDictate() {
-        _audioPlayer.pause()
+        paused = true
+        _audioPlayer.stop() // _audioPlayer.pause()
     }
 
     fun resumeDictate() {
+        paused = false
         _audioPlayer.resume()
     }
 
@@ -187,4 +244,5 @@ class DictateController {
     private var _sentences: List<List<String>> = listOf()
     private var _currentSentenceIndex = 0
     private var _textChanged = true
+    private var _pausedAtPart = 0
 }

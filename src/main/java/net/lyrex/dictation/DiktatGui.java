@@ -24,6 +24,7 @@ public class DiktatGui extends JFrame {
     private JTextArea diktatText;
     public JPanel mainPanel;
     private JScrollPane textPane;
+    private JButton stopDictationButton;
 
     private final OptionDialogue optionWindow = new OptionDialogue();
 
@@ -57,20 +58,33 @@ public class DiktatGui extends JFrame {
 
         // set-up action listeners
         dictateButton.addActionListener(e -> {
-            if (optionWindow.getDictateOptions().getHideTextWhileDictating()) {
-                hideTextArea();
-            }
-
-            // todo(tobias): this needs to be moved onto another thread
-            dictateController.dictateFullText();
-
-            showTextArea();
+            var worker = new DictateButtonWorker();
+            worker.execute();
         });
 
-        previousSentenceButton.addActionListener(e -> dictateController.dictatePreviousSentence());
-        repeatSentenceButton.addActionListener(e -> dictateController.dictateCurrentSentence());
-        nextSentenceButton.addActionListener(e -> dictateController.dictateNextSentence());
-        pauseDictationButton.addActionListener(e -> dictateController.pauseDictate());
+        previousSentenceButton.addActionListener(e -> {
+            var w = new DictatePreviousSentenceWorker();
+            w.execute();
+        });
+        repeatSentenceButton.addActionListener(e -> {
+            var w = new DictateCurrentSentenceWorker();
+            w.execute();
+        });
+        nextSentenceButton.addActionListener(e -> {
+            var w = new DictateNextSentenceWorker();
+            w.execute();
+        });
+        pauseDictationButton.addActionListener(e -> {
+            dictateController.pauseDictate();
+            showTextArea();
+            dictateButton.setText("Diktat Fortsetzen");
+        });
+
+        stopDictationButton.addActionListener(e -> {
+            dictateController.stopDictate();
+            showTextArea();
+            dictateButton.setText("Diktieren");
+        });
 
         selectSourceButton.addActionListener(e -> {
             final JFileChooser fc = new JFileChooser(Paths.get("./src/main/resources").toAbsolutePath().normalize().toString());
@@ -146,7 +160,7 @@ public class DiktatGui extends JFrame {
         selectSourceButton.setText("Quell-Datei auswählen");
         mainPanel.add(selectSourceButton, new GridConstraints(0, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final JPanel panel1 = new JPanel();
-        panel1.setLayout(new GridLayoutManager(1, 4, new Insets(0, 0, 0, 0), -1, -1));
+        panel1.setLayout(new GridLayoutManager(1, 5, new Insets(0, 0, 0, 0), -1, -1));
         mainPanel.add(panel1, new GridConstraints(2, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
         previousSentenceButton = new JButton();
         previousSentenceButton.setText("Vorheriger Satz");
@@ -160,6 +174,9 @@ public class DiktatGui extends JFrame {
         pauseDictationButton = new JButton();
         pauseDictationButton.setText("Ausgabe Pausieren");
         panel1.add(pauseDictationButton, new GridConstraints(0, 3, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
+        stopDictationButton = new JButton();
+        stopDictationButton.setText("Diktat Beenden");
+        panel1.add(stopDictationButton, new GridConstraints(0, 4, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         dictateButton = new JButton();
         dictateButton.setText("Diktieren");
         mainPanel.add(dictateButton, new GridConstraints(1, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
@@ -193,5 +210,81 @@ public class DiktatGui extends JFrame {
 
         textPane.invalidate();
         textPane.revalidate();
+    }
+
+    private class DictatePreviousSentenceWorker extends SwingWorker<Object, Object> {
+        @Override
+        protected Object doInBackground() {
+            if (optionWindow.getDictateOptions().getHideTextWhileDictating()) {
+                hideTextArea();
+            }
+
+            dictateController.dictatePreviousSentence();
+
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            showTextArea();
+        }
+    }
+
+    private class DictateCurrentSentenceWorker extends SwingWorker<Object, Object> {
+        @Override
+        protected Object doInBackground() {
+            if (optionWindow.getDictateOptions().getHideTextWhileDictating()) {
+                hideTextArea();
+            }
+
+            dictateController.dictateCurrentSentence();
+
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            showTextArea();
+        }
+    }
+
+    private class DictateNextSentenceWorker extends SwingWorker<Object, Object> {
+        @Override
+        protected Object doInBackground() {
+            if (optionWindow.getDictateOptions().getHideTextWhileDictating()) {
+                hideTextArea();
+            }
+
+            dictateController.dictateNextSentence();
+
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            showTextArea();
+        }
+    }
+
+    private class DictateButtonWorker extends SwingWorker<Object, Object> {
+        @Override
+        protected Object doInBackground() {
+            if (optionWindow.getDictateOptions().getHideTextWhileDictating()) {
+                hideTextArea();
+            }
+
+            dictateController.dictateFullText();
+
+            return null;
+        }
+
+        @Override
+        protected void done() {
+            showTextArea();
+
+            if (!dictateController.getPaused()) {
+                dictateButton.setText("Diktieren");
+            }
+        }
     }
 }
