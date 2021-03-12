@@ -18,13 +18,14 @@ class DictateController {
         this.dictateOptions = dictateOptions
 
         this._audioCache = AudioCache(AudioEncoding.LINEAR16, dictateOptions.voice)
-        this._nlpProcessor = NLPProcessor(this.dictateOptions.language, dictateOptions.pronouncePunctation)
+        this._nlpProcessor = NLPProcessor(this.dictateOptions.language, dictateOptions.pronouncePunctation,
+                dictateOptions.charactersPerSentencePartTarget, dictateOptions.charactersPerSentencePartMax)
     }
 
     // ---[ member methods
     fun dictateFullText() {
-        if (_textChanged) {
-            parseTextIntoSentences()
+        parseTextIntoSentencesIfNecessary()
+
         }
 
         // actually play audio for dictate now
@@ -90,10 +91,9 @@ class DictateController {
         }
     }
 
+
     fun dictatePreviousSentence() {
-        if (_textChanged) {
-            parseTextIntoSentences()
-        }
+        parseTextIntoSentencesIfNecessary()
 
         if (_currentSentenceIndex > 0) {
             _currentSentenceIndex -= 1
@@ -102,9 +102,7 @@ class DictateController {
     }
 
     fun dictateCurrentSentence() {
-        if (_textChanged) {
-            parseTextIntoSentences()
-        }
+        parseTextIntoSentencesIfNecessary()
 
         if (_sentences.lastIndex <= _currentSentenceIndex) {
             dictateSentence(_currentSentenceIndex)
@@ -112,9 +110,7 @@ class DictateController {
     }
 
     fun dictateNextSentence() {
-        if (_textChanged) {
-            parseTextIntoSentences()
-        }
+        parseTextIntoSentencesIfNecessary()
 
         if ((_currentSentenceIndex + 1) < _sentences.lastIndex) {
             _currentSentenceIndex += 1
@@ -130,7 +126,7 @@ class DictateController {
         _audioPlayer.resume()
     }
 
-    private fun parseTextIntoSentences() {
+    private fun parseTextIntoSentencesIfNecessary() {
         if (_textChanged) {
             _sentences = if (!dictateText.isNullOrBlank()) {
                 _nlpProcessor.dissectText(dictateText)
@@ -159,8 +155,20 @@ class DictateController {
 
             // recreate the NLP pipeline if the language changed
             if (field == null || field.voice.language != value.voice.language) {
-                _nlpProcessor = NLPProcessor(value.voice.language, value.pronouncePunctation)
-                parseTextIntoSentences()
+                _nlpProcessor = NLPProcessor(value.voice.language, value.pronouncePunctation,
+                        value.charactersPerSentencePartTarget, value.charactersPerSentencePartMax)
+                parseTextIntoSentencesIfNecessary()
+            }
+
+            // update the NLP pipeline if the part parameters changes
+            if (field != null) {
+                if (field.charactersPerSentencePartTarget != value.charactersPerSentencePartTarget ||
+                        field.charactersPerSentencePartMax != value.charactersPerSentencePartMax) {
+                    _nlpProcessor.targetPartLength = value.charactersPerSentencePartTarget
+                    _nlpProcessor.maxPartLength = value.charactersPerSentencePartMax
+
+                    parseTextIntoSentencesIfNecessary()
+                }
             }
 
             // invalidate the audio cache if the voice changed

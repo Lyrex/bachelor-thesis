@@ -19,4 +19,7 @@ data class DictateOptions(
         val speakingSpeed: SpeakingSpeed,
         val voice: Voice,
         val hideTextWhileDictating: Boolean,
+
+        val charactersPerSentencePartTarget: Int,
+        val charactersPerSentencePartMax: Int,
 )

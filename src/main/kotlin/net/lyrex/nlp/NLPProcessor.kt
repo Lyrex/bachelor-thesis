@@ -11,10 +11,8 @@ import java.util.*
 
 fun Tree.isSentence(): Boolean = this.label().value().length == 2 && this.label().value().endsWith("P")
 
-const val TARGET_TEXT_LENGTH = 20
-const val MAX_TEXT_LENGTH = 40
-
-class NLPProcessor(private val lang: Language, private val pronouncePunctation: Boolean) {
+class NLPProcessor(private val lang: Language, private val pronouncePunctation: Boolean,
+                   var targetPartLength: Int, var maxPartLength: Int) {
     private var pipeline: StanfordCoreNLP
 
     init {
@@ -140,7 +138,7 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
                 }
             }
 
-            if (partLen > MAX_TEXT_LENGTH || containsStopPunctation(part)) {
+            if (partLen > maxPartLength || containsStopPunctation(part)) {
                 processedList.add(part)
                 continue
             }
@@ -152,9 +150,9 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
                 val isLastPart = currentPartNumber >= (parts.lastIndex - 2)
 
                 val nextPart = parts[i + n + 1]
-                if (currentPart.length < TARGET_TEXT_LENGTH
+                if (currentPart.length < targetPartLength
                         && (partsRemaining > 2 || isLastPart)
-                        && currentPart.length + getPartLength(i + n) < MAX_TEXT_LENGTH) {
+                        && currentPart.length + getPartLength(i + n) < targetPartLength) {
                     currentPart += " $nextPart"
                     skipN += 1
 

@@ -30,6 +30,8 @@ public class OptionDialogue extends JFrame {
     private JLabel textLanguageLabel;
     public JButton confirmButton;
     public JButton cancelButton;
+    private JSpinner wordsPerSegmentTarget;
+    private JSpinner wordsPerSegmentMax;
 
     public OptionDialogue() {
         this.setTitle("DB - Einstellungen");
@@ -52,6 +54,16 @@ public class OptionDialogue extends JFrame {
                 30,
                 1)
         );
+
+        wordsPerSegmentTarget.setModel(new SpinnerNumberModel(20,
+                1,
+                100,
+                1));
+
+        wordsPerSegmentMax.setModel(new SpinnerNumberModel(40,
+                1,
+                1000,
+                1));
 
         /// set-up options for combo boxes
         // language selection
@@ -94,9 +106,11 @@ public class OptionDialogue extends JFrame {
         dialoguePanel = new JPanel();
         dialoguePanel.setLayout(new GridLayoutManager(1, 1, new Insets(10, 10, 10, 10), -1, -1));
         dialoguePanel.setEnabled(true);
+        final JTabbedPane tabbedPane1 = new JTabbedPane();
+        dialoguePanel.add(tabbedPane1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(200, 200), null, 0, false));
         final JPanel panel1 = new JPanel();
         panel1.setLayout(new GridLayoutManager(5, 1, new Insets(0, 0, 0, 0), -1, -1));
-        dialoguePanel.add(panel1, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, new Dimension(430, -1), null, 0, false));
+        tabbedPane1.addTab("Einstellungen", panel1);
         final JPanel panel2 = new JPanel();
         panel2.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
         panel1.add(panel2, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false));
@@ -195,12 +209,39 @@ public class OptionDialogue extends JFrame {
         panel9.add(confirmButton, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0, false));
         final Spacer spacer8 = new Spacer();
         panel1.add(spacer8, new GridConstraints(3, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
+        final JPanel panel10 = new JPanel();
+        panel10.setLayout(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
+        tabbedPane1.addTab("Experten-Einstellungen", panel10);
+        final JPanel panel11 = new JPanel();
+        panel11.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+        panel10.add(panel11, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, new Dimension(255, 36), null, 0, false));
+        final JLabel label7 = new JLabel();
+        label7.setText("Zeichen pro Satzteil (~min)");
+        panel11.add(label7, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(140, -1), null, 0, false));
+        final Spacer spacer9 = new Spacer();
+        panel11.add(spacer9, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        wordsPerSegmentTarget = new JSpinner();
+        panel11.add(wordsPerSegmentTarget, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(60, -1), null, 0, false));
+        final JPanel panel12 = new JPanel();
+        panel12.setLayout(new GridLayoutManager(1, 3, new Insets(0, 0, 0, 0), -1, -1));
+        panel10.add(panel12, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, 1, null, null, null, 0, false));
+        final JLabel label8 = new JLabel();
+        label8.setText("Zeichen pro Satzteil (~max)");
+        panel12.add(label8, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_FIXED, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(140, -1), null, 0, false));
+        wordsPerSegmentMax = new JSpinner();
+        panel12.add(wordsPerSegmentMax, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_EAST, GridConstraints.FILL_NONE, GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, new Dimension(60, -1), null, 0, false));
+        final Spacer spacer10 = new Spacer();
+        panel12.add(spacer10, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL, GridConstraints.SIZEPOLICY_WANT_GROW, 1, null, null, null, 0, false));
+        final Spacer spacer11 = new Spacer();
+        panel10.add(spacer11, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_VERTICAL, 1, GridConstraints.SIZEPOLICY_WANT_GROW, null, null, null, 0, false));
         textLanguageLabel.setLabelFor(selectLanguaceComboBox);
         label1.setLabelFor(speakerVoiceSelection);
         label3.setLabelFor(speakingSpeedSelection);
         label4.setLabelFor(pauseDurationRepetition);
         label5.setLabelFor(pauseDurationSentence);
         label6.setLabelFor(partRepetitionCount);
+        label7.setLabelFor(wordsPerSegmentTarget);
+        label8.setLabelFor(wordsPerSegmentMax);
     }
 
     /**
@@ -251,7 +292,9 @@ public class OptionDialogue extends JFrame {
                 pronuncePunctationCheckbox.isSelected(),
                 (SpeakingSpeed) Objects.requireNonNull(speakingSpeedSelection.getSelectedItem()),
                 (Voice) Objects.requireNonNull(speakerVoiceSelection.getSelectedItem()),
-                hideTextWhileDictating.isSelected()
+                hideTextWhileDictating.isSelected(),
+                Integer.parseInt(String.valueOf(wordsPerSegmentTarget.getValue())),
+                Integer.parseInt(String.valueOf(wordsPerSegmentMax.getValue()))
         );
     }
 
@@ -266,6 +309,8 @@ public class OptionDialogue extends JFrame {
                 pronuncePunctationCheckbox.isSelected() != data.getPronouncePunctation() ||
                 speakingSpeedSelection.getSelectedItem() != data.getSpeakingSpeed() ||
                 speakerVoiceSelection.getSelectedItem() != data.getVoice() ||
-                hideTextWhileDictating.isSelected() != data.getHideTextWhileDictating();
+                hideTextWhileDictating.isSelected() != data.getHideTextWhileDictating() ||
+                Integer.parseInt(String.valueOf(wordsPerSegmentTarget.getValue())) != data.getCharactersPerSentencePartTarget() ||
+                Integer.parseInt(String.valueOf(wordsPerSegmentMax.getValue())) != data.getCharactersPerSentencePartMax();
     }
 }
