@@ -1,6 +1,10 @@
 package net.lyrex.audio
 
-import com.google.cloud.texttospeech.v1.*;
+import com.google.api.gax.core.FixedCredentialsProvider
+import com.google.auth.oauth2.GoogleCredentials
+import com.google.cloud.texttospeech.v1.*
+
+import java.io.File
 
 
 internal class AudioProcessor {
@@ -22,7 +26,13 @@ internal class AudioProcessor {
             inputText: String, audioEncoding: AudioEncoding, voice: Voice,
             speakingSpeed: SpeakingSpeed = SpeakingSpeed.Normal
         ): ByteArray {
-            TextToSpeechClient.create().use { ttsClient ->
+            // use local google cloud platform credentials
+            val credentials = GoogleCredentials.fromStream(File("gcp-credentials.dat").inputStream())
+            val ttsSettings = TextToSpeechSettings.newBuilder()
+                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+                .build()
+
+            TextToSpeechClient.create(ttsSettings).use { ttsClient ->
                 val input = SynthesisInput.newBuilder().setText(inputText).build()
 
                 val voiceParams = VoiceSelectionParams.newBuilder()

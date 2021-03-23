@@ -1,11 +1,12 @@
 package net.lyrex.image
 
+import com.google.api.gax.core.FixedCredentialsProvider
+import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.vision.v1.*
 import com.google.protobuf.ByteString
 
-import kotlin.Throws
+import java.io.File
 import java.io.IOException
-import java.util.ArrayList
 
 class ImageProcessor {
     companion object {
@@ -21,7 +22,13 @@ class ImageProcessor {
 
             var fullText = ""
 
-            ImageAnnotatorClient.create().use { client ->
+            // use local google cloud platform credentials
+            val credentials = GoogleCredentials.fromStream(File("gcp-credentials.dat").inputStream())
+            val imageAnnotatorSettings = ImageAnnotatorSettings.newBuilder()
+                .setCredentialsProvider(FixedCredentialsProvider.create(credentials))
+                .build()
+
+            ImageAnnotatorClient.create(imageAnnotatorSettings).use { client ->
                 val response = client.batchAnnotateImages(requests)
                 val responses = response.responsesList
                 client.close()
