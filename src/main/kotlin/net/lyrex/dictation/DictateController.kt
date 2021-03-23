@@ -1,18 +1,18 @@
 package net.lyrex.dictation
 
-import java.time.Duration
-import java.util.concurrent.TimeUnit
-
 import com.google.cloud.texttospeech.v1.AudioEncoding
+
 import mu.KotlinLogging
 
 import net.lyrex.audio.*
 import net.lyrex.nlp.NLPProcessor
+
 import java.io.*
-import java.lang.Exception
-import javax.sound.sampled.AudioSystem
-import javax.sound.sampled.AudioInputStream
+import java.time.Duration
+import java.util.concurrent.TimeUnit
 import javax.sound.sampled.AudioFileFormat
+import javax.sound.sampled.AudioInputStream
+import javax.sound.sampled.AudioSystem
 
 import kotlin.math.roundToInt
 

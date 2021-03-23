@@ -1,10 +1,9 @@
 package net.lyrex.audio
 
-import java.lang.IllegalArgumentException
-import java.util.EnumMap
-
 import com.google.cloud.texttospeech.v1.SsmlVoiceGender
 import com.google.cloud.texttospeech.v1.TextToSpeechClient
+
+import java.util.EnumMap
 
 
 class Voice(val language: Language, val gender: Gender, val name: String) {

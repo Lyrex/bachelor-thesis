@@ -1,12 +1,12 @@
 package net.lyrex.nlp
 
-
 import edu.stanford.nlp.pipeline.CoreSentence
 import edu.stanford.nlp.pipeline.StanfordCoreNLP
 import edu.stanford.nlp.trees.Tree
 import edu.stanford.nlp.util.StringUtils
+
 import net.lyrex.audio.Language
-import java.lang.Exception
+
 import java.util.*
 
 fun Tree.isSentence(): Boolean = this.label().value().length == 2 && this.label().value().endsWith("P")

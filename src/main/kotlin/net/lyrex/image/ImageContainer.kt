@@ -1,9 +1,9 @@
 package net.lyrex.image
 
 import java.io.File
-import java.io.FileNotFoundException
 import java.io.FileInputStream
-import java.util.Base64;
+import java.io.FileNotFoundException
+import java.util.Base64
 
 
 class ImageContainer {
