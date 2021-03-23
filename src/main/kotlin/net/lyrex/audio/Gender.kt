@@ -9,10 +9,10 @@ enum class Gender(val ssmlGender: SsmlVoiceGender) {
 
     override fun toString(): String {
         return when (this) {
-            Male -> "männlich"
-            Female -> "weiblich"
+            Male    -> "männlich"
+            Female  -> "weiblich"
             Neutral -> "neutral"
-            else -> super.toString()
+            else    -> super.toString()
         }
     }
 }

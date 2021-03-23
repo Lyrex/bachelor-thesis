@@ -27,8 +27,10 @@ class DictateController {
         this.dictateOptions = dictateOptions
 
         this._audioCache = AudioCache(AudioEncoding.LINEAR16, dictateOptions.voice, dictateOptions.speakingSpeed)
-        this._nlpProcessor = NLPProcessor(this.dictateOptions.language, dictateOptions.pronouncePunctation,
-                dictateOptions.charactersPerSentencePartTarget, dictateOptions.charactersPerSentencePartMax)
+        this._nlpProcessor = NLPProcessor(
+            this.dictateOptions.language, dictateOptions.pronouncePunctation,
+            dictateOptions.charactersPerSentencePartTarget, dictateOptions.charactersPerSentencePartMax
+        )
     }
 
     // ---[ member methods
@@ -81,8 +83,8 @@ class DictateController {
     private fun getAudioForSentence(sentenceParts: List<String>): List<ByteArray> {
         val sentenceAudio = mutableListOf<ByteArray>()
 
-        val silenceBytes = this.javaClass.getResourceAsStream("/audio/silence-500ms.wav").use {
-            s -> s.readBytes()
+        val silenceBytes = this.javaClass.getResourceAsStream("/audio/silence-500ms.wav").use { s ->
+            s.readBytes()
         }
 
         val addFullSentenceAudio = {
@@ -179,8 +181,8 @@ class DictateController {
 
         parseTextIntoSentencesIfNecessary()
 
-        val silenceBytes = this.javaClass.getResourceAsStream("/audio/silence-500ms.wav").use {
-            s -> s.readBytes()
+        val silenceBytes = this.javaClass.getResourceAsStream("/audio/silence-500ms.wav").use { s ->
+            s.readBytes()
         }
 
         if (dictateOptions.readFullDictateOnce) {
@@ -198,7 +200,8 @@ class DictateController {
 
             // wait configured time between sentences
             if (dictateOptions.pauseTimeBetweenSentences > Duration.ZERO && sentenceAudio.isNotEmpty()) {
-                var pauseDuration = dictateOptions.pauseTimeBetweenSentences - dictateOptions.pauseTimeBetweenRepetitions
+                var pauseDuration =
+                    dictateOptions.pauseTimeBetweenSentences - dictateOptions.pauseTimeBetweenRepetitions
                 if (pauseDuration < Duration.ZERO) {
                     pauseDuration = Duration.ZERO
                 }
@@ -289,17 +292,20 @@ class DictateController {
 
         val clipA = AudioSystem.getAudioInputStream(ByteArrayInputStream(audioInputByteArrays[0]))
         val clipB = AudioSystem.getAudioInputStream(ByteArrayInputStream(audioInputByteArrays[1]))
-        var appendedFiles = AudioInputStream(SequenceInputStream(clipA, clipB),
-                clipA.format, clipA.frameLength + clipB.frameLength)
+        var appendedFiles = AudioInputStream(
+            SequenceInputStream(clipA, clipB),
+            clipA.format, clipA.frameLength + clipB.frameLength
+        )
 
 
         for (i in 1 until audioInputByteArrays.size - 1) {
             val clip = AudioSystem.getAudioInputStream(ByteArrayInputStream(audioInputByteArrays[i + 1]))
 
             appendedFiles = AudioInputStream(
-                    SequenceInputStream(appendedFiles, clip),
-                    appendedFiles.format,
-                    appendedFiles.frameLength + clip.frameLength)
+                SequenceInputStream(appendedFiles, clip),
+                appendedFiles.format,
+                appendedFiles.frameLength + clip.frameLength
+            )
         }
 
         val output = ByteArrayOutputStream()
@@ -330,15 +336,18 @@ class DictateController {
 
             // recreate the NLP pipeline if the language changed
             if (field == null || field.voice.language != value.voice.language) {
-                _nlpProcessor = NLPProcessor(value.voice.language, value.pronouncePunctation,
-                        value.charactersPerSentencePartTarget, value.charactersPerSentencePartMax)
+                _nlpProcessor = NLPProcessor(
+                    value.voice.language, value.pronouncePunctation,
+                    value.charactersPerSentencePartTarget, value.charactersPerSentencePartMax
+                )
                 parseTextIntoSentencesIfNecessary()
             }
 
             // update the NLP pipeline if the part parameters changes
             if (field != null) {
                 if (field.charactersPerSentencePartTarget != value.charactersPerSentencePartTarget ||
-                        field.charactersPerSentencePartMax != value.charactersPerSentencePartMax) {
+                    field.charactersPerSentencePartMax != value.charactersPerSentencePartMax
+                ) {
                     _nlpProcessor.targetPartLength = value.charactersPerSentencePartTarget
                     _nlpProcessor.maxPartLength = value.charactersPerSentencePartMax
 

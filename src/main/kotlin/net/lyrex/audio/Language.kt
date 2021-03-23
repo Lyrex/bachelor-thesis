@@ -9,22 +9,22 @@ enum class Language(val languageString: String) {
 
     override fun toString(): String {
         return when (this) {
-            German -> "Deutsch"
+            German    -> "Deutsch"
             EnglishUS -> "Englisch (US)"
             EnglishUK -> "Englisch (UK)"
-            Spanish -> "Spanisch"
-            French -> "Französisch"
-            else -> super.toString()
+            Spanish   -> "Spanisch"
+            French    -> "Französisch"
+            else      -> super.toString()
         }
     }
 
     fun toCoreNlpString(): String {
         return when (this) {
-            German -> "german"
+            German               -> "german"
             EnglishUS, EnglishUK -> "english"
-            Spanish -> "spanish"
-            French -> "french"
-            else -> super.toString().toLowerCase()
+            Spanish              -> "spanish"
+            French               -> "french"
+            else                 -> super.toString().toLowerCase()
         }
     }
 }

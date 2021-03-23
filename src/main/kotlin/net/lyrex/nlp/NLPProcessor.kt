@@ -11,12 +11,15 @@ import java.util.*
 
 fun Tree.isSentence(): Boolean = this.label().value().length == 2 && this.label().value().endsWith("P")
 
-class NLPProcessor(private val lang: Language, private val pronouncePunctation: Boolean,
-                   var targetPartLength: Int, var maxPartLength: Int) {
+class NLPProcessor(
+    private val lang: Language, private val pronouncePunctation: Boolean,
+    var targetPartLength: Int, var maxPartLength: Int
+) {
     private var pipeline: StanfordCoreNLP
 
     init {
-        val props: Properties = StringUtils.argsToProperties("-props", "StanfordCoreNLP-${lang.toCoreNlpString()}.properties")
+        val props: Properties =
+            StringUtils.argsToProperties("-props", "StanfordCoreNLP-${lang.toCoreNlpString()}.properties")
         props.setProperty("language", lang.toCoreNlpString())
         props.setProperty("annotators", "tokenize,ssplit,pos,parse")
         props.setProperty("coref.algorithm", "neural")
@@ -30,10 +33,10 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
             tree.isPrePreTerminal -> {
                 result = "[${tree.spanString()}]"
             }
-            tree.isPreTerminal -> {
+            tree.isPreTerminal    -> {
                 result += "${tree.spanString()} "
             }
-            tree.isPhrasal -> {
+            tree.isPhrasal        -> {
                 var s = ""
                 var open = openn
                 for (c in tree.children()) {
@@ -42,7 +45,10 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
                         open = true
                     }
                     if (open && !c.isPreTerminal &&
-                            !(tree.label().value().length == 3 && tree.label().value().startsWith("C") && tree.label().value().endsWith("P"))) {
+                        !(tree.label().value().length == 3 &&
+                                tree.label().value().startsWith("C") &&
+                                tree.label().value().endsWith("P"))
+                    ) {
                         s = s.removeSuffix(" ") + "]"
                         open = false
                     }
@@ -52,20 +58,20 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
                 if (open) s = s.removeSuffix(" ") + "]"
                 result += s
             }
-            else -> {
+            else                  -> {
                 throw Exception("this should never happen")
             }
         }
 
         // post-process results
         result = result
-                .replace("[[", "[")
-                .replace("]]", "]")
+            .replace("[[", "[")
+            .replace("]]", "]")
         result = result
-                .replace("][,]", ", ]")
-                .replace("][.]", ".]")
+            .replace("][,]", ", ]")
+            .replace("][.]", ".]")
         result = result
-                .replace(" ,", ", ")
+            .replace(" ,", ", ")
 
         return result
     }
@@ -134,7 +140,7 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
             val getPartLength = { n: Int ->
                 when {
                     parts.lastIndex > n -> parts[n].length
-                    else -> 99999
+                    else                -> 99999
                 }
             }
 
@@ -151,8 +157,9 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
 
                 val nextPart = parts[i + n + 1]
                 if (currentPart.length < targetPartLength
-                        && (partsRemaining > 2 || isLastPart)
-                        && currentPart.length + getPartLength(i + n) < targetPartLength) {
+                    && (partsRemaining > 2 || isLastPart)
+                    && currentPart.length + getPartLength(i + n) < targetPartLength
+                ) {
                     currentPart += " $nextPart"
                     skipN += 1
 
@@ -168,10 +175,10 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
         }
 
         return processedList
-                .filter { s -> s.isNotEmpty() }
-                .map { s -> s.replace("  ", " ") }
-                .map { s -> s.replace("  ", " ") }
-                .map { s -> s.trim() }
+            .filter { s -> s.isNotEmpty() }
+            .map { s -> s.replace("  ", " ") }
+            .map { s -> s.replace("  ", " ") }
+            .map { s -> s.trim() }
     }
 
     private fun flattenOncePass(parts: List<String>): List<String> {
@@ -203,10 +210,10 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
         }
 
         return preProcessedParts
-                .filter { s -> s.isNotEmpty() }
-                .map { s -> s.replace("  ", " ") }
-                .map { s -> s.replace("  ", " ") }
-                .map { s -> s.trim() }
+            .filter { s -> s.isNotEmpty() }
+            .map { s -> s.replace("  ", " ") }
+            .map { s -> s.replace("  ", " ") }
+            .map { s -> s.trim() }
     }
 
     private fun fixPunctationPass(parts: MutableList<String>) {
@@ -233,7 +240,7 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
                                 parts[index] += ","
                                 parts[index + 1] = next.removePrefix(",").trimStart()
                             }
-                            next.contains(':') -> {
+                            next.contains(':')   -> {
                                 val ps = next.split(":")
 
                                 parts[index] += " " + ps[0].trim() + ":"
@@ -291,84 +298,84 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
 
     private fun replacePunctation(input: String): String {
         return when (lang) {
-            Language.German ->
-                input.replace(".", " Punkt")
-                        .replace(",", " Komma")
-                        .replace(":", " Doppelpunkt")
-                        .replace("!", " Ausrufezeichen")
-                        .replace("?", " Fragezeichen")
-                        .replace(";", " Semikolon")
-                        .replace("\"", " Anführungszeichen")
-                        .replace("[", " Paranthese auf")
-                        .replace("]", " Paranthese zu")
-                        .replace("-", " Bindestrich")
-                        .replace("»", " Anführungszeichen")
-                        .replace("«", " Anführungszeichen")
-                        .replace("/", " Schrägstrich")
-                        .replace("(", " Klammer auf")
-                        .replace(")", " Klammer zu")
-                        .replace("'", " Anführungszeichen")
-                        .replace("-RRB-", " Klammer zu")
-                        .replace("-LRB-", " Klammer auf")
+            Language.German                        ->
+                input.replace(".", " Punkt.")
+                    .replace(",", " Komma,")
+                    .replace(":", " Doppelpunkt:")
+                    .replace("!", " Ausrufezeichen!")
+                    .replace("?", " Fragezeichen?")
+                    .replace(";", " Semikolon;")
+                    .replace("\"", " Anführungszeichen ")
+                    .replace("[", " Paranthese auf")
+                    .replace("]", " Paranthese zu")
+                    .replace("-", " Bindestrich")
+                    .replace("»", "Anführungszeichen ")
+                    .replace("«", " Anführungszeichen")
+                    .replace("/", " Schrägstrich")
+                    .replace("(", " Klammer auf")
+                    .replace(")", " Klammer zu")
+                    .replace("'", " Anführungszeichen")
+                    .replace("-RRB-", " Klammer zu")
+                    .replace("-LRB-", " Klammer auf")
             Language.EnglishUS, Language.EnglishUK ->
                 input.replace(".", " dot")
-                        .replace(",", " comma")
-                        .replace(":", " colon")
-                        .replace("!", " exclamation mark")
-                        .replace("?", " question mark")
-                        .replace(";", " semicolon")
-                        .replace("\"", " quotation marks")
-                        .replace("[", " parenthesis on")
-                        .replace("]", " parenthesis closed")
-                        .replace("-", " hyphen")
-                        .replace("»", " quotation marks")
-                        .replace("«", " quotation marks")
-                        .replace("'", " quotation marks")
-                        .replace("/", " slash")
-                        .replace("(", " brackets on")
-                        .replace(")", " brackets closed")
-                        .replace("-RRB-", " brackets on")
-                        .replace("-LRB-", " brackets closed")
-            Language.Spanish ->
+                    .replace(",", " comma")
+                    .replace(":", " colon")
+                    .replace("!", " exclamation mark")
+                    .replace("?", " question mark")
+                    .replace(";", " semicolon")
+                    .replace("\"", " quotation marks")
+                    .replace("[", " parenthesis on")
+                    .replace("]", " parenthesis closed")
+                    .replace("-", " hyphen")
+                    .replace("»", " quotation marks")
+                    .replace("«", " quotation marks")
+                    .replace("'", " quotation marks")
+                    .replace("/", " slash")
+                    .replace("(", " brackets on")
+                    .replace(")", " brackets closed")
+                    .replace("-RRB-", " brackets on")
+                    .replace("-LRB-", " brackets closed")
+            Language.Spanish                       ->
                 input.replace(".", " punto")
-                        .replace(",", " coma")
-                        .replace(":", " los dos puntos")
-                        .replace("!", " signos de exclamación")
-                        .replace("¡", " signos de exclamación")
-                        .replace("?", " signos de interrogación")
-                        .replace("¿", " signos de interrogación")
-                        .replace(";", " punto y coma")
-                        .replace("\"", " comillas")
-                        .replace("[", " corchetes")
-                        .replace("]", " corchetes")
-                        .replace("-", " guión")
-                        .replace("»", " comillas")
-                        .replace("«", " comillas")
-                        .replace("'", " comillas")
-                        .replace("/", " barra oblicua")
-                        .replace("(", " paréntesis")
-                        .replace(")", " paréntesis")
-                        .replace("-RRB-", " paréntesis")
-                        .replace("-LRB-", " paréntesis")
-            Language.French ->
+                    .replace(",", " coma")
+                    .replace(":", " los dos puntos")
+                    .replace("!", " signos de exclamación")
+                    .replace("¡", " signos de exclamación")
+                    .replace("?", " signos de interrogación")
+                    .replace("¿", " signos de interrogación")
+                    .replace(";", " punto y coma")
+                    .replace("\"", " comillas")
+                    .replace("[", " corchetes")
+                    .replace("]", " corchetes")
+                    .replace("-", " guión")
+                    .replace("»", " comillas")
+                    .replace("«", " comillas")
+                    .replace("'", " comillas")
+                    .replace("/", " barra oblicua")
+                    .replace("(", " paréntesis")
+                    .replace(")", " paréntesis")
+                    .replace("-RRB-", " paréntesis")
+                    .replace("-LRB-", " paréntesis")
+            Language.French                        ->
                 input.replace(".", " point")
-                        .replace(",", " virgule")
-                        .replace(":", " double point")
-                        .replace("!", " point d'exclamation")
-                        .replace("?", " point d'interrogation")
-                        .replace(";", " point d'interrogation")
-                        .replace("\"", " guillemets")
-                        .replace("[", " parenthèses")
-                        .replace("]", " parenthèses")
-                        .replace("-", " piret")
-                        .replace("»", " guillemets")
-                        .replace("«", " guillemets")
-                        .replace("'", " guillemets")
-                        .replace("/", " sabrer")
-                        .replace("(", " parenthèses")
-                        .replace(")", " parenthèses")
-                        .replace("-RRB-", " parenthèses")
-                        .replace("-LRB-", " parenthèses")
+                    .replace(",", " virgule")
+                    .replace(":", " double point")
+                    .replace("!", " point d'exclamation")
+                    .replace("?", " point d'interrogation")
+                    .replace(";", " point d'interrogation")
+                    .replace("\"", " guillemets")
+                    .replace("[", " parenthèses")
+                    .replace("]", " parenthèses")
+                    .replace("-", " piret")
+                    .replace("»", " guillemets")
+                    .replace("«", " guillemets")
+                    .replace("'", " guillemets")
+                    .replace("/", " sabrer")
+                    .replace("(", " parenthèses")
+                    .replace(")", " parenthèses")
+                    .replace("-RRB-", " parenthèses")
+                    .replace("-LRB-", " parenthèses")
         }
     }
 
@@ -414,6 +421,8 @@ class NLPProcessor(private val lang: Language, private val pronouncePunctation: 
         return parsedSentences
     }
 
-    private fun containsStopPunctation(s: String) = s.contains('.') || s.contains('!') || s.contains('?') || s.contains(';') || s.contains(':')
+    private fun containsStopPunctation(s: String) =
+        s.contains('.') || s.contains('!') || s.contains('?') || s.contains(';') || s.contains(':')
+
     private fun containsPunctation(s: String) = containsStopPunctation(s) || s.contains(',')
 }

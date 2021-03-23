@@ -18,21 +18,23 @@ internal class AudioProcessor {
         }
 
         @JvmStatic
-        fun textToAudio(inputText: String, audioEncoding: AudioEncoding, voice: Voice,
-                        speakingSpeed: SpeakingSpeed = SpeakingSpeed.Normal): ByteArray {
+        fun textToAudio(
+            inputText: String, audioEncoding: AudioEncoding, voice: Voice,
+            speakingSpeed: SpeakingSpeed = SpeakingSpeed.Normal
+        ): ByteArray {
             TextToSpeechClient.create().use { ttsClient ->
                 val input = SynthesisInput.newBuilder().setText(inputText).build()
 
                 val voiceParams = VoiceSelectionParams.newBuilder()
-                        .setLanguageCode(voice.language.languageString)
-                        .setSsmlGender(voice.gender.ssmlGender)
-                        .setName(voice.name)
-                        .build()
+                    .setLanguageCode(voice.language.languageString)
+                    .setSsmlGender(voice.gender.ssmlGender)
+                    .setName(voice.name)
+                    .build()
 
                 val audioConfig = AudioConfig.newBuilder()
-                        .setAudioEncoding(audioEncoding)
-                        .setSpeakingRate(speakingSpeed.speed)
-                        .build()
+                    .setAudioEncoding(audioEncoding)
+                    .setSpeakingRate(speakingSpeed.speed)
+                    .build()
 
                 // Perform the text-to-speech request on the text input with the selected voice parameters and
                 // audio file type

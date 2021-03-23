@@ -27,10 +27,10 @@ class Voice(val language: Language, val gender: Gender, val name: String) {
 
                     val voices = response.voicesList.map { v ->
                         val gender = when (v.ssmlGender) {
-                            SsmlVoiceGender.MALE -> Gender.Male
-                            SsmlVoiceGender.FEMALE -> Gender.Female
+                            SsmlVoiceGender.MALE    -> Gender.Male
+                            SsmlVoiceGender.FEMALE  -> Gender.Female
                             SsmlVoiceGender.NEUTRAL -> Gender.Neutral
-                            else -> {
+                            else                    -> {
                                 throw IllegalArgumentException("unknown gender")
                             }
                         }

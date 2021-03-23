@@ -10,11 +10,11 @@ enum class SpeakingSpeed(val speed: Double) {
     override fun toString(): String {
         return when (this) {
             VerySlow -> "Sehr langsam"
-            Slow -> "Langsam"
-            Normal -> "Normal"
-            Fast -> "Schnell"
+            Slow     -> "Langsam"
+            Normal   -> "Normal"
+            Fast     -> "Schnell"
             VeryFast -> "Sehr schnell"
-            else -> super.toString()
+            else     -> super.toString()
         }
     }
 }
