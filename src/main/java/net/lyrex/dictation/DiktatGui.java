@@ -4,6 +4,8 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import net.lyrex.image.ImageContainer;
 import net.lyrex.image.ImageProcessor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -29,6 +31,7 @@ public class DiktatGui extends JFrame {
     private final OptionDialogue optionWindow = new OptionDialogue();
     private final LoadingDialogue loadingDialogue = new LoadingDialogue();
 
+    @NotNull
     private final DictateController dictateController;
 
 
@@ -73,7 +76,7 @@ public class DiktatGui extends JFrame {
                 File file = fc.getSelectedFile();
 
                 if (!file.getName().toLowerCase().endsWith(".wav")) {
-                    file = new File(file.toString() + ".wav");
+                    file = new File(file + ".wav");
                 }
 
                 try (var outputStream = new FileOutputStream(file, false)) {
@@ -253,6 +256,7 @@ public class DiktatGui extends JFrame {
     }
 
     private class DictatePreviousSentenceWorker extends SwingWorker<Object, Object> {
+        @Nullable
         @Override
         protected Object doInBackground() {
             if (optionWindow.getDictateOptions().getHideTextWhileDictating()) {
@@ -271,6 +275,7 @@ public class DiktatGui extends JFrame {
     }
 
     private class DictateCurrentSentenceWorker extends SwingWorker<Object, Object> {
+        @Nullable
         @Override
         protected Object doInBackground() {
             if (optionWindow.getDictateOptions().getHideTextWhileDictating()) {
@@ -289,6 +294,7 @@ public class DiktatGui extends JFrame {
     }
 
     private class DictateNextSentenceWorker extends SwingWorker<Object, Object> {
+        @Nullable
         @Override
         protected Object doInBackground() {
             if (optionWindow.getDictateOptions().getHideTextWhileDictating()) {
@@ -307,6 +313,7 @@ public class DiktatGui extends JFrame {
     }
 
     private class DictateButtonWorker extends SwingWorker<Object, Object> {
+        @Nullable
         @Override
         protected Object doInBackground() {
             if (optionWindow.getDictateOptions().getHideTextWhileDictating()) {
@@ -329,6 +336,7 @@ public class DiktatGui extends JFrame {
     }
 
     private class ApplyOptionsWorker extends SwingWorker<Object, Object> {
+        @Nullable
         @Override
         protected Object doInBackground() {
             optionWindow.setVisible(false);

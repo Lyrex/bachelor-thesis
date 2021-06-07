@@ -8,13 +8,17 @@ import com.google.protobuf.ByteString
 import java.io.File
 import java.io.IOException
 
+interface IImageProcessor {
+    fun imageToText(inputImage: IImageContainer): String
+}
+
 class ImageProcessor {
-    companion object {
+    companion object: IImageProcessor {
         @Throws(IOException::class)
         @JvmStatic
-        fun imageToText(inputImage: ImageContainer): String {
+        override fun imageToText(inputImage: IImageContainer): String {
             val requests: MutableList<AnnotateImageRequest> = ArrayList()
-            val imgBytes = ByteString.copyFrom(inputImage.imageData)
+            val imgBytes = ByteString.copyFrom(inputImage.asByteArray())
             val img = Image.newBuilder().setContent(imgBytes).build()
             val feat = Feature.newBuilder().setType(Feature.Type.TEXT_DETECTION).build()
             val request = AnnotateImageRequest.newBuilder().addFeatures(feat).setImage(img).build()

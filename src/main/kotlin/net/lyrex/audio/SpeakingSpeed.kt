@@ -14,7 +14,6 @@ enum class SpeakingSpeed(val speed: Double) {
             Normal   -> "Normal"
             Fast     -> "Schnell"
             VeryFast -> "Sehr schnell"
-            else     -> super.toString()
         }
     }
 }

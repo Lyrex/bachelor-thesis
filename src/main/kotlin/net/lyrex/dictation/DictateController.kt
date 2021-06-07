@@ -5,7 +5,7 @@ import com.google.cloud.texttospeech.v1.AudioEncoding
 import mu.KotlinLogging
 
 import net.lyrex.audio.*
-import net.lyrex.nlp.NLPProcessor
+import net.lyrex.nlp.*
 
 import java.io.*
 import java.time.Duration
@@ -198,6 +198,8 @@ class DictateController {
             val sentenceAudio = getAudioForSentence(sentence)
             audioPartsList.addAll(sentenceAudio)
 
+            // [...]
+
             // wait configured time between sentences
             if (dictateOptions.pauseTimeBetweenSentences > Duration.ZERO && sentenceAudio.isNotEmpty()) {
                 var pauseDuration =
@@ -350,6 +352,7 @@ class DictateController {
                 ) {
                     _nlpProcessor.targetPartLength = value.charactersPerSentencePartTarget
                     _nlpProcessor.maxPartLength = value.charactersPerSentencePartMax
+                    _textChanged = true
 
                     parseTextIntoSentencesIfNecessary()
                 }
@@ -365,9 +368,9 @@ class DictateController {
 
 
     // ---[ private members
-    private val _audioPlayer: AudioPlayer = AudioPlayer()
-    private var _audioCache: AudioCache
-    private var _nlpProcessor: NLPProcessor
+    private val _audioPlayer: IAudioPlayer = AudioPlayer()
+    private var _audioCache: IAudioCache
+    private var _nlpProcessor: INLPProcessor
     private var _sentences: List<List<String>> = listOf()
     private var _currentSentenceIndex = 0
     private var _textChanged = true

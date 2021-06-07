@@ -9,7 +9,17 @@ import javax.sound.sampled.LineEvent
 
 private val logger = KotlinLogging.logger {}
 
-class AudioPlayer {
+interface IAudioPlayer {
+    val isPlaying: Boolean
+
+    fun play(audioBytes: ByteArray)
+    fun resume()
+    fun pause()
+    fun stop()
+    fun waitUntilPlayingIsOver(timeoutSeconds: Int = -1)
+}
+
+class AudioPlayer : IAudioPlayer {
     private class AudioPlayerRunner(private val audioBytes: ByteArray) : Runnable {
         var isPlaying = false
 
@@ -76,7 +86,7 @@ class AudioPlayer {
     private var _audioThread: Thread? = null
     private var paused = false
 
-    fun play(audioBytes: ByteArray) {
+    override fun play(audioBytes: ByteArray) {
         synchronized(lock) {
             if (_audioThread != null) {
                 stop()
@@ -88,14 +98,14 @@ class AudioPlayer {
         }
     }
 
-    fun resume() {
+    override fun resume() {
         if (paused && _audioThread != null) {
             _audioThread!!.run()
             paused = false
         }
     }
 
-    fun pause() {
+    override fun pause() {
         synchronized(lock) {
             _audioThread?.interrupt()
             _audioThread?.join()
@@ -103,7 +113,7 @@ class AudioPlayer {
         }
     }
 
-    fun stop() {
+    override fun stop() {
         synchronized(lock) {
             _audioThread?.interrupt()
             _audioThread?.join()
@@ -112,7 +122,7 @@ class AudioPlayer {
         }
     }
 
-    fun waitUntilPlayingIsOver(timeoutSeconds: Int = -1) {
+    override fun waitUntilPlayingIsOver(timeoutSeconds: Int) {
         // todo(tobias): this should not busy wait. use a thread or some kind of async (kotlin coroutines, hello?)
         var waitedMilliseconds = 0
 
@@ -126,7 +136,7 @@ class AudioPlayer {
         }
     }
 
-    val isPlaying: Boolean
+    override val isPlaying: Boolean
         get() {
             var threadNotNull: Boolean
             var threadIsAlive: Boolean

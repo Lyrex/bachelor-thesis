@@ -6,7 +6,12 @@ import java.io.FileNotFoundException
 import java.util.Base64
 
 
-class ImageContainer {
+interface IImageContainer {
+    fun asBase64(): String
+    fun asByteArray(): ByteArray
+}
+
+class ImageContainer : IImageContainer {
     constructor(filePath: String) : this(File(filePath)) {
     }
 
@@ -22,8 +27,12 @@ class ImageContainer {
         }
     }
 
-    fun asBase64(): String {
+    override fun asBase64(): String {
         return Base64.getEncoder().encodeToString(this.imageData)
+    }
+
+    override fun asByteArray(): ByteArray {
+        return this.imageData
     }
 
     var imageData: ByteArray

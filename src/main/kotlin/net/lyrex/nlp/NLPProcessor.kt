@@ -9,17 +9,34 @@ import net.lyrex.audio.Language
 
 import java.util.*
 
+import mu.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
+
 fun Tree.isSentence(): Boolean = this.label().value().length == 2 && this.label().value().endsWith("P")
+
+interface INLPProcessor {
+    var targetPartLength: Int
+    var maxPartLength: Int
+    fun dissectText(input: String): List<List<String>>
+}
 
 class NLPProcessor(
     private val lang: Language, private val pronouncePunctation: Boolean,
-    var targetPartLength: Int, var maxPartLength: Int
-) {
+    override var targetPartLength: Int, override var maxPartLength: Int
+) : INLPProcessor {
     private var pipeline: StanfordCoreNLP
 
     init {
         val props: Properties =
-            StringUtils.argsToProperties("-props", "StanfordCoreNLP-${lang.toCoreNlpString()}.properties")
+            when (lang) {
+                Language.EnglishUS, Language.EnglishUK -> Properties()
+                else                                   -> StringUtils.argsToProperties(
+                    "-props",
+                    "StanfordCoreNLP-${lang.toCoreNlpString()}.properties"
+                )
+            }
+
         props.setProperty("language", lang.toCoreNlpString())
         props.setProperty("annotators", "tokenize,ssplit,pos,parse")
         props.setProperty("coref.algorithm", "neural")
@@ -79,10 +96,12 @@ class NLPProcessor(
     private fun dissectSentence(sentence: CoreSentence): List<String> {
         val constituencyTree: Tree = sentence.constituencyParse()
 
-        val isSentence = { node: Tree -> node.label().value().length == 2 && node.label().value().endsWith("P") }
-        val isNoSentence = { node: Tree -> !isSentence(node) }
+        // val isSentence = { node: Tree -> node.label().value().length == 2 && node.label().value().endsWith("P") }
+        // val isNoSentence = { node: Tree -> !isSentence(node) }
 
         val parsed = parseSubTree(constituencyTree)
+        logger.debug { "Parsed sub tree: $parsed" }
+
         val parts: List<String> = parsed.split("[", "]")
 
         val preProcessedParts = flattenOncePass(parts).toMutableList()
@@ -119,6 +138,8 @@ class NLPProcessor(
 */
 
 
+        logger.debug { "parsed and processed sub tree: ${resultList.joinToString(" | ")}" }
+
         return resultList
     }
 
@@ -132,11 +153,6 @@ class NLPProcessor(
                 continue
             }
 
-            val partLen = part.length
-            if (partLen == 0) {
-                continue
-            }
-
             val getPartLength = { n: Int ->
                 when {
                     parts.lastIndex > n -> parts[n].length
@@ -144,7 +160,7 @@ class NLPProcessor(
                 }
             }
 
-            if (partLen > maxPartLength || containsStopPunctation(part)) {
+            if (part.length > maxPartLength || containsStopPunctation(part)) {
                 processedList.add(part)
                 continue
             }
@@ -318,13 +334,13 @@ class NLPProcessor(
                     .replace("-RRB-", " Klammer zu")
                     .replace("-LRB-", " Klammer auf")
             Language.EnglishUS, Language.EnglishUK ->
-                input.replace(".", " dot")
-                    .replace(",", " comma")
-                    .replace(":", " colon")
-                    .replace("!", " exclamation mark")
-                    .replace("?", " question mark")
-                    .replace(";", " semicolon")
-                    .replace("\"", " quotation marks")
+                input.replace(".", " dot.")
+                    .replace(",", " comma,")
+                    .replace(":", " colon:")
+                    .replace("!", " exclamation mark!")
+                    .replace("?", " question mark?")
+                    .replace(";", " semicolon;")
+                    .replace("\"", " quotation marks ")
                     .replace("[", " parenthesis on")
                     .replace("]", " parenthesis closed")
                     .replace("-", " hyphen")
@@ -337,14 +353,14 @@ class NLPProcessor(
                     .replace("-RRB-", " brackets on")
                     .replace("-LRB-", " brackets closed")
             Language.Spanish                       ->
-                input.replace(".", " punto")
-                    .replace(",", " coma")
-                    .replace(":", " los dos puntos")
-                    .replace("!", " signos de exclamación")
-                    .replace("¡", " signos de exclamación")
-                    .replace("?", " signos de interrogación")
-                    .replace("¿", " signos de interrogación")
-                    .replace(";", " punto y coma")
+                input.replace(".", " punto.")
+                    .replace(",", " coma,")
+                    .replace(":", " los dos puntos: ")
+                    .replace("!", " signos de exclamación!")
+                    .replace("¡", " signos de exclamación¡")
+                    .replace("?", " signos de interrogación?")
+                    .replace("¿", " signos de interrogación¿")
+                    .replace(";", " punto y coma;")
                     .replace("\"", " comillas")
                     .replace("[", " corchetes")
                     .replace("]", " corchetes")
@@ -379,7 +395,7 @@ class NLPProcessor(
         }
     }
 
-    fun dissectText(input: String): List<List<String>> {
+    override fun dissectText(input: String): List<List<String>> {
         val doc = pipeline.processToCoreDocument(input)
 
         val sentences = doc.sentences()
@@ -422,7 +438,7 @@ class NLPProcessor(
     }
 
     private fun containsStopPunctation(s: String) =
-        s.contains('.') || s.contains('!') || s.contains('?') || s.contains(';') || s.contains(':')
+        s.contains('.') || s.contains('!') || s.contains('¡') || s.contains('?')|| s.contains('¿') || s.contains(';') || s.contains(':')
 
     private fun containsPunctation(s: String) = containsStopPunctation(s) || s.contains(',')
 }
